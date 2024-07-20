@@ -1,6 +1,7 @@
 var productModal = $("#productModal");
+
 $(function () {
-    // JSON data by API call
+    // Load product list
     $.get(productListApiUrl, function (response) {
         if (response) {
             var table = '';
@@ -15,104 +16,77 @@ $(function () {
             $("table").find('tbody').empty().html(table);
         }
     });
-});
 
-function saveProduct() {
-    var data = $("#productForm").serializeArray();
-    var requestPayload = {
-        product_name: null,
-        uom_id: null,
-        price_per_unit: null
-    };
-    for (var i = 0; i < data.length; ++i) {
-        var element = data[i];
-        switch (element.name) {
-            case 'name':
-                requestPayload.product_name = element.value;
-                break;
-            case 'uoms':
-                requestPayload.uom_id = element.value;
-                break;
-            case 'price':
-                requestPayload.price_per_unit = element.value;
-                break;
+    // Save or Update Product
+    $("#saveProduct").on("click", function () {
+        var data = $("#productForm").serializeArray();
+        var requestPayload = {
+            product_id: $("#id").val(),
+            product_name: null,
+            uom_id: null,
+            price_per_unit: null
+        };
+
+        for (var i = 0; i < data.length; ++i) {
+            var element = data[i];
+            switch (element.name) {
+                case 'name':
+                    requestPayload.product_name = element.value;
+                    break;
+                case 'uoms':
+                    requestPayload.uom_id = element.value;
+                    break;
+                case 'price':
+                    requestPayload.price_per_unit = element.value;
+                    break;
+            }
         }
-    }
-    callApi("POST", productSaveApiUrl, {
-        'data': JSON.stringify(requestPayload)
+
+        var apiUrl = requestPayload.product_id === "0" ? productSaveApiUrl : productUpdateApiUrl;
+        callApi("POST", apiUrl, {
+            'data': JSON.stringify(requestPayload)
+        });
     });
-}
 
-function updateProduct() {
-    var data = $("#productForm").serializeArray();
-    var requestPayload = {
-        product_id: $("#id").val(), // Include product ID
-        product_name: null,
-        uom_id: null,
-        price_per_unit: null
-    };
-    for (var i = 0; i < data.length; ++i) {
-        var element = data[i];
-        switch (element.name) {
-            case 'name':
-                requestPayload.product_name = element.value;
-                break;
-            case 'uoms':
-                requestPayload.uom_id = element.value;
-                break;
-            case 'price':
-                requestPayload.price_per_unit = element.value;
-                break;
+    // Delete Product
+    $(document).on("click", ".delete-product", function () {
+        var tr = $(this).closest('tr');
+        var data = {
+            product_id: tr.data('id')
+        };
+        var isDelete = confirm("Are you sure to delete " + tr.data('name') + " item?");
+        if (isDelete) {
+            callApi("POST", productDeleteApiUrl, data);
         }
-    }
-    callApi("PUT", productUpdateApiUrl, {
-        'data': JSON.stringify(requestPayload)
     });
-}
 
-$(document).on("click", ".delete-product", function () {
-    var tr = $(this).closest('tr');
-    var data = {
-        product_id: tr.data('id')
-    };
-    var isDelete = confirm("Are you sure to delete " + tr.data('name') + " item?");
-    if (isDelete) {
-        callApi("POST", productDeleteApiUrl, data);
-    }
-});
+    // Edit Product
+    $(document).on("click", ".edit-product", function () {
+        var tr = $(this).closest('tr');
+        $("#id").val(tr.data('id'));
+        $("#name").val(tr.data('name'));
+        $("#uoms").val(tr.data('unit'));
+        $("#price").val(tr.data('price'));
+        productModal.find('.modal-title').text('Edit Product');
+        productModal.modal('show');
+    });
 
-// New functionality: Edit product
-$(document).on("click", ".edit-product", function () {
-    var tr = $(this).closest('tr');
-    // Populate modal with existing data
-    $("#id").val(tr.data('id'));
-    $("#name").val(tr.data('name'));
-    $("#uoms").val(tr.data('unit'));
-    $("#price").val(tr.data('price'));
-    productModal.find('.modal-title').text('Edit Product');
-    productModal.modal('show');
-});
+    productModal.on('hide.bs.modal', function () {
+        $("#id").val('0');
+        $("#name, #uoms, #price").val('');
+        productModal.find('.modal-title').text('Add New Product');
+    });
 
-// Update Product
-$("#updateProduct").on("click", function () {
-    updateProduct();
-});
-
-productModal.on('hide.bs.modal', function () {
-    $("#id").val('0');
-    $("#name, #uoms, #price").val('');
-    productModal.find('.modal-title').text('Add New Product');
-});
-
-productModal.on('show.bs.modal', function () {
-    // JSON data by API call
-    $.get(uomListApiUrl, function (response) {
-        if (response) {
-            var options = '<option value="">--Select--</option>';
-            $.each(response, function (index, uom) {
-                options += '<option value="' + uom.uom_id + '">' + uom.uom_name + '</option>';
-            });
-            $("#uoms").empty().html(options);
-        }
+    productModal.on('show.bs.modal', function () {
+        // Load UOM list
+        $.get(uomListApiUrl, function (response) {
+            if (response) {
+                var options = '<option value="">--Select--</option>';
+                $.each(response, function (index, uom) {
+                    options += '<option value="' + uom.uom_id + '">' + uom.uom_name + '</option>';
+                });
+                $("#uoms").empty().html(options);
+            }
+        });
     });
 });

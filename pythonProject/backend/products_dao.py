@@ -67,11 +67,11 @@ if __name__ == '__main__':
     #     'uom_id': '1',
     #     'price_per_unit': 10
     # }))
-
-    new_data = {
-        'new_name': 'apple',
-        'new_uom_id': '1',
-        'new_price_unit': '22',
-        'product_id': '1',
-    }
-    print(update_product(connection, new_data))
+    #
+    # new_data = {
+    #     'new_name': 'apple',
+    #     'new_uom_id': '1',
+    #     'new_price_unit': '22',
+    #     'product_id': '1',
+    # }
+    # print(update_product(connection, new_data))
